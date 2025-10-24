@@ -56,7 +56,7 @@
             font-size: 14px;
         }
 
-        input[type="number"] {
+        input[type="number"], input[type="text"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -65,7 +65,7 @@
             transition: all 0.3s;
         }
 
-        input[type="number"]:focus {
+        input[type="number"]:focus, input[type="text"]:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -149,6 +149,36 @@
             content: "🔥 ";
             margin-right: 5px;
         }
+
+        .add-custom {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .add-custom input[type="text"] {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 10px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .muted {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+        }
     </style>
 </head>
 <body>
@@ -176,10 +206,10 @@
             <input type="number" id="ninos" value="0" min="0">
         </div>
 
-        <div class="checkbox-group">
+        <div class="checkbox-group" id="checkboxGroup">
             <label><strong>Selecciona las carnes:</strong></label>
             <label>
-                <input type="checkbox" id="alitas" value="alitas">
+                <input type="checkbox" id="alitas" value="alitas" class="meat-checkbox">
                 <span>Alitas de pollo</span>
             </label>
             <label>
@@ -187,21 +217,31 @@
                 <span>Hamburguesas (150g cada una)</span>
             </label>
             <label>
-                <input type="checkbox" id="pinchitos" value="pinchitos">
+                <input type="checkbox" id="pinchitos" value="pinchitos" class="meat-checkbox">
                 <span>Pinchitos de pollo</span>
             </label>
             <label>
-                <input type="checkbox" id="salchichas" value="salchichas">
+                <input type="checkbox" id="salchichas" value="salchichas" class="meat-checkbox">
                 <span>Salchichas</span>
             </label>
             <label>
-                <input type="checkbox" id="chuletas" value="chuletas">
+                <input type="checkbox" id="chuletas" value="chuletas" class="meat-checkbox">
                 <span>Chuletas</span>
             </label>
             <label>
                 <input type="checkbox" id="chorizo" value="chorizo">
                 <span>Chorizo (medio por adulto)</span>
             </label>
+
+            <!-- Área para añadir carnes personalizadas -->
+            <div style="margin-top: 8px;">
+                <div class="muted">Añadir nuevo tipo de carne:</div>
+                <div class="add-custom">
+                    <input type="text" id="otroCarneNombre" placeholder="Escribe el nombre (ej. costillas)">
+                    <button id="agregarCarneBtn" class="btn" type="button">Añadir</button>
+                </div>
+                <small style="display:block; margin-top:6px; color:#666;">-> Puedes añadir varios tipos; se repartirán dinámicamente el peso restante.</small>
+            </div>
         </div>
 
         <div class="result">
@@ -217,8 +257,12 @@
     </div>
 
     <script>
+        // Formatea gramos a g o kg
         function formatearPeso(gramos) {
-            if (gramos >= 1000) {
+            if (isNaN(gramos) || gramos === 0) {
+                return { valor: 0, unidad: 'g' };
+            }
+            if (Math.abs(gramos) >= 1000) {
                 const kilos = gramos / 1000;
                 return {
                     valor: kilos.toFixed(2),
@@ -232,8 +276,44 @@
             }
         }
 
+        // Añadir nuevo tipo de carne dinámicamente
+        function addCustomMeat(name) {
+            const trimmed = name.trim();
+            if (!trimmed) return;
+
+            const checkboxGroup = document.getElementById('checkboxGroup');
+
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            // use a safe id
+            const idSafe = 'custom-' + trimmed.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+            checkbox.id = idSafe;
+            checkbox.value = idSafe;
+            checkbox.className = 'meat-checkbox';
+
+            const span = document.createElement('span');
+            span.textContent = trimmed;
+
+            label.appendChild(checkbox);
+            label.appendChild(span);
+
+            // Insert the new label right before the add-custom area
+            // find the add-custom container (we can insert before its parent div's next sibling)
+            const addCustomDiv = document.querySelector('.add-custom').parentElement;
+            checkboxGroup.insertBefore(label, addCustomDiv);
+
+            // add event listener to the new checkbox
+            checkbox.addEventListener('change', calcular);
+
+            // clear input
+            document.getElementById('otroCarneNombre').value = '';
+            // recalculate
+            calcular();
+        }
+
         function calcular() {
-            const pesoBase = parseFloat(document.getElementById('pesoBase').value) || 500;
+            const pesoBase = parseFloat(document.getElementById('pesoBase').value) || parseFloat(document.getElementById('pesoBase').defaultValue) || 500;
             const mujeres = parseFloat(document.getElementById('mujeres').value) || 0;
             const hombres = parseFloat(document.getElementById('hombres').value) || 0;
             const ninos = parseFloat(document.getElementById('ninos').value) || 0;
@@ -241,13 +321,12 @@
             const totalPersonas = mujeres + hombres + ninos;
             const adultos = mujeres + hombres;
             
-            const tieneAlitas = document.getElementById('alitas').checked;
             const tieneHamburguesas = document.getElementById('hamburguesas').checked;
-            const tienePinchitos = document.getElementById('pinchitos').checked;
-            const tieneSalchichas = document.getElementById('salchichas').checked;
-            const tieneChuletas = document.getElementById('chuletas').checked;
             const tieneChorizo = document.getElementById('chorizo').checked;
-            
+
+            // Obtener todas las checkboxes de tipos de carne (clase meat-checkbox)
+            const meatCheckboxes = Array.from(document.querySelectorAll('.meat-checkbox'));
+
             // Cálculo base: Hombres peso completo, Mujeres 0.75, Niños 0.50
             let totalCarne = pesoBase * (hombres + (mujeres * 0.75) + (ninos * 0.50));
             
@@ -256,13 +335,15 @@
                 totalCarne = totalCarne * 0.75;
             }
             
-            if (tieneAlitas) {
+            if (document.getElementById('alitas') && document.getElementById('alitas').checked) {
+                // Mantengo incremento de 10% para alitas como en la versión original
                 totalCarne = totalCarne * 1.10;
             }
             
             // Mostrar resultado con formato
             const pesoFormateado = formatearPeso(totalCarne);
-            document.getElementById('totalCarne').textContent = pesoFormateado.valor.toLocaleString('es-ES');
+            // pesoFormateado.valor puede ser string (kg) o number (g). Aseguramos string para mostrar con separadores
+            document.getElementById('totalCarne').textContent = String(pesoFormateado.valor).toLocaleString('es-ES');
             document.getElementById('totalUnit').textContent = pesoFormateado.unidad;
             
             // Lista de compra
@@ -270,11 +351,11 @@
             const shoppingList = document.getElementById('shoppingList');
             listItems.innerHTML = '';
             
-            if (totalPersonas > 0 && (tieneAlitas || tieneHamburguesas || tienePinchitos || tieneSalchichas || tieneChuletas || tieneChorizo)) {
+            // Consideramos seleccionados los tipos de carne (meat-checkbox) que estén checked
+            const tiposCarneSeleccionados = meatCheckboxes.filter(cb => cb.checked);
+            
+            if (totalPersonas > 0 && (tieneHamburguesas || tieneChorizo || tiposCarneSeleccionados.length > 0)) {
                 shoppingList.style.display = 'block';
-                
-                // Contar tipos de carne seleccionados (sin contar hamburguesas)
-                const tiposCarneSeleccionados = [tieneAlitas, tienePinchitos, tieneSalchichas, tieneChuletas].filter(Boolean).length;
                 
                 // Peso restante después de hamburguesas
                 let pesoRestante = totalCarne;
@@ -292,39 +373,57 @@
                     listItems.innerHTML += `<li>Chorizo: ${numChorizos} unidades (medio por adulto)</li>`;
                 }
                 
-                // Distribuir el peso restante entre los demás tipos de carne
-                if (tiposCarneSeleccionados > 0) {
-                    const pesoPorTipo = pesoRestante / tiposCarneSeleccionados;
+                // Distribuir el peso restante entre los demás tipos de carne seleccionados
+                if (tiposCarneSeleccionados.length > 0) {
+                    // Si el peso restante es negativo (caso improbable), forzamos a 0
+                    if (pesoRestante < 0) pesoRestante = 0;
+                    const pesoPorTipo = pesoRestante / tiposCarneSeleccionados.length;
                     
-                    if (tieneAlitas) {
-                        const pesoAlitasFormateado = formatearPeso(pesoPorTipo);
-                        listItems.innerHTML += `<li>Alitas de pollo (${pesoAlitasFormateado.valor} ${pesoAlitasFormateado.unidad})</li>`;
-                    }
-                    
-                    if (tienePinchitos) {
-                        const pesoPinchitosFormateado = formatearPeso(pesoPorTipo);
-                        listItems.innerHTML += `<li>Pinchitos de pollo (${pesoPinchitosFormateado.valor} ${pesoPinchitosFormateado.unidad})</li>`;
-                    }
-                    
-                    if (tieneSalchichas) {
-                        const pesoSalchichasFormateado = formatearPeso(pesoPorTipo);
-                        listItems.innerHTML += `<li>Salchichas (${pesoSalchichasFormateado.valor} ${pesoSalchichasFormateado.unidad})</li>`;
-                    }
-                    
-                    if (tieneChuletas) {
-                        const pesoChuletas = formatearPeso(pesoPorTipo);
-                        listItems.innerHTML += `<li>Chuletas (${pesoChuletas.valor} ${pesoChuletas.unidad})</li>`;
-                    }
-                } else if (!tieneHamburguesas) {
-                    // Si no hay ningún tipo de carne seleccionado excepto chorizo
+                    tiposCarneSeleccionados.forEach(cb => {
+                        // Obtener el texto del span hermano (el nombre de la carne)
+                        let nombre = '';
+                        const parent = cb.parentElement;
+                        if (parent) {
+                            const span = parent.querySelector('span');
+                            nombre = span ? span.textContent : cb.value;
+                        } else {
+                            nombre = cb.value;
+                        }
+                        const pesoTipoFormateado = formatearPeso(pesoPorTipo);
+                        listItems.innerHTML += `<li>${nombre} (${pesoTipoFormateado.valor} ${pesoTipoFormateado.unidad})</li>`;
+                    });
+                } else if (!tieneHamburguesas && !tieneChorizo) {
+                    // Si no hay ningún tipo de carne seleccionado y no hay hamburguesas ni chorizo
                     listItems.innerHTML += `<li>Sin tipos de carne seleccionados (selecciona al menos uno)</li>`;
                 }
             } else {
                 shoppingList.style.display = 'none';
             }
         }
-        
-        // Event listeners
+
+        // Cuando un input number tiene "0" y el usuario hace focus, se borra el 0 automáticamente.
+        function attachNumberInputBehavior() {
+            const numberInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+            numberInputs.forEach(input => {
+                // On focus: remove a single "0" to let user type quickly
+                input.addEventListener('focus', (e) => {
+                    // Solo eliminar si el valor es exactamente "0"
+                    if (e.target.value === "0") {
+                        e.target.value = "";
+                    }
+                });
+                // On blur: if empty, restore the default value (so pesoBase vuelve a su 500 por defecto)
+                input.addEventListener('blur', (e) => {
+                    if (e.target.value === "") {
+                        // Use defaultValue if present, otherwise set to 0
+                        e.target.value = (e.target.defaultValue !== undefined && e.target.defaultValue !== "") ? e.target.defaultValue : "0";
+                    }
+                    calcular();
+                });
+            });
+        }
+
+        // Event listeners iniciales
         document.getElementById('pesoBase').addEventListener('input', calcular);
         document.getElementById('mujeres').addEventListener('input', calcular);
         document.getElementById('hombres').addEventListener('input', calcular);
@@ -335,7 +434,26 @@
         document.getElementById('salchichas').addEventListener('change', calcular);
         document.getElementById('chuletas').addEventListener('change', calcular);
         document.getElementById('chorizo').addEventListener('change', calcular);
-        
+
+        // Añadir nuevos tipos de carne
+        document.getElementById('agregarCarneBtn').addEventListener('click', () => {
+            const nombre = document.getElementById('otroCarneNombre').value;
+            if (!nombre.trim()) return;
+            addCustomMeat(nombre);
+        });
+        // Soporta Enter en el campo de texto
+        document.getElementById('otroCarneNombre').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const nombre = e.target.value;
+                if (!nombre.trim()) return;
+                addCustomMeat(nombre);
+            }
+        });
+
+        // Attach behavior to number inputs (clear leading 0 on focus)
+        attachNumberInputBehavior();
+
         // Calcular al cargar
         calcular();
     </script>
