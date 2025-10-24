@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora BBQ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            margin-bottom: 25px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .checkbox-group label:hover {
+            background: #f5f5f5;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .result h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .result .total {
+            font-size: 42px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .result .unit {
+            font-size: 24px;
+            opacity: 0.9;
+        }
+
+        .shopping-list {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .shopping-list h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .shopping-list ul {
+            list-style: none;
+            text-align: left;
+        }
+
+        .shopping-list li {
+            padding: 5px 0;
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .shopping-list li:before {
+            content: "🔥 ";
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍖 Calculadora BBQ</h1>
+        <p class="subtitle">Planifica tu barbacoa perfecta</p>
+
+        <div class="input-group">
+            <label for="pesoBase">Peso base por persona (gramos):</label>
+            <input type="number" id="pesoBase" value="500" min="0" step="50">
+        </div>
+
+        <div class="input-group">
+            <label for="mujeres">👩 Mujeres adultas:</label>
+            <input type="number" id="mujeres" value="0" min="0">
+        </div>
+
+        <div class="input-group">
+            <label for="hombres">👨 Hombres adultos:</label>
+            <input type="number" id="hombres" value="0" min="0">
+        </div>
+
+        <div class="input-group">
+            <label for="ninos">👶 Niños:</label>
+            <input type="number" id="ninos" value="0" min="0">
+        </div>
+
+        <div class="checkbox-group">
+            <label><strong>Selecciona las carnes:</strong></label>
+            <label>
+                <input type="checkbox" id="alitas" value="alitas">
+                <span>Alitas de pollo</span>
+            </label>
+            <label>
+                <input type="checkbox" id="hamburguesas" value="hamburguesas">
+                <span>Hamburguesas (150g cada una)</span>
+            </label>
+            <label>
+                <input type="checkbox" id="pinchitos" value="pinchitos">
+                <span>Pinchitos de pollo</span>
+            </label>
+            <label>
+                <input type="checkbox" id="salchichas" value="salchichas">
+                <span>Salchichas</span>
+            </label>
+            <label>
+                <input type="checkbox" id="chuletas" value="chuletas">
+                <span>Chuletas</span>
+            </label>
+            <label>
+                <input type="checkbox" id="chorizo" value="chorizo">
+                <span>Chorizo (medio por adulto)</span>
+            </label>
+        </div>
+
+        <div class="result">
+            <h2>Total de carne a comprar</h2>
+            <div class="total" id="totalCarne">0</div>
+            <div class="unit" id="totalUnit">gramos</div>
+            
+            <div class="shopping-list" id="shoppingList" style="display: none;">
+                <h3>Lista de compra:</h3>
+                <ul id="listItems"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatearPeso(gramos) {
+            if (gramos >= 1000) {
+                const kilos = gramos / 1000;
+                return {
+                    valor: kilos.toFixed(2),
+                    unidad: 'kg'
+                };
+            } else {
+                return {
+                    valor: Math.round(gramos),
+                    unidad: 'g'
+                };
+            }
+        }
+
+        function calcular() {
+            const pesoBase = parseFloat(document.getElementById('pesoBase').value) || 500;
+            const mujeres = parseFloat(document.getElementById('mujeres').value) || 0;
+            const hombres = parseFloat(document.getElementById('hombres').value) || 0;
+            const ninos = parseFloat(document.getElementById('ninos').value) || 0;
+            
+            const totalPersonas = mujeres + hombres + ninos;
+            const adultos = mujeres + hombres;
+            
+            const tieneAlitas = document.getElementById('alitas').checked;
+            const tieneHamburguesas = document.getElementById('hamburguesas').checked;
+            const tienePinchitos = document.getElementById('pinchitos').checked;
+            const tieneSalchichas = document.getElementById('salchichas').checked;
+            const tieneChuletas = document.getElementById('chuletas').checked;
+            const tieneChorizo = document.getElementById('chorizo').checked;
+            
+            // Cálculo base: Hombres peso completo, Mujeres 0.75, Niños 0.50
+            let totalCarne = pesoBase * (hombres + (mujeres * 0.75) + (ninos * 0.50));
+            
+            // Ajustes según tipo de carne
+            if (tieneHamburguesas) {
+                totalCarne = totalCarne * 0.75;
+            }
+            
+            if (tieneAlitas) {
+                totalCarne = totalCarne * 1.10;
+            }
+            
+            // Mostrar resultado con formato
+            const pesoFormateado = formatearPeso(totalCarne);
+            document.getElementById('totalCarne').textContent = pesoFormateado.valor.toLocaleString('es-ES');
+            document.getElementById('totalUnit').textContent = pesoFormateado.unidad;
+            
+            // Lista de compra
+            const listItems = document.getElementById('listItems');
+            const shoppingList = document.getElementById('shoppingList');
+            listItems.innerHTML = '';
+            
+            if (totalPersonas > 0 && (tieneAlitas || tieneHamburguesas || tienePinchitos || tieneSalchichas || tieneChuletas || tieneChorizo)) {
+                shoppingList.style.display = 'block';
+                
+                // Contar tipos de carne seleccionados (sin contar hamburguesas)
+                const tiposCarneSeleccionados = [tieneAlitas, tienePinchitos, tieneSalchichas, tieneChuletas].filter(Boolean).length;
+                
+                // Peso restante después de hamburguesas
+                let pesoRestante = totalCarne;
+                
+                if (tieneHamburguesas) {
+                    const numHamburguesas = totalPersonas;
+                    const pesoHamburguesas = numHamburguesas * 150;
+                    const pesoHamburguesasFormateado = formatearPeso(pesoHamburguesas);
+                    listItems.innerHTML += `<li>Hamburguesas: ${numHamburguesas} unidades (${pesoHamburguesasFormateado.valor} ${pesoHamburguesasFormateado.unidad})</li>`;
+                    pesoRestante = pesoRestante - pesoHamburguesas;
+                }
+                
+                if (tieneChorizo && adultos > 0) {
+                    const numChorizos = Math.ceil(adultos * 0.5);
+                    listItems.innerHTML += `<li>Chorizo: ${numChorizos} unidades (medio por adulto)</li>`;
+                }
+                
+                // Distribuir el peso restante entre los demás tipos de carne
+                if (tiposCarneSeleccionados > 0) {
+                    const pesoPorTipo = pesoRestante / tiposCarneSeleccionados;
+                    
+                    if (tieneAlitas) {
+                        const pesoAlitasFormateado = formatearPeso(pesoPorTipo);
+                        listItems.innerHTML += `<li>Alitas de pollo (${pesoAlitasFormateado.valor} ${pesoAlitasFormateado.unidad})</li>`;
+                    }
+                    
+                    if (tienePinchitos) {
+                        const pesoPinchitosFormateado = formatearPeso(pesoPorTipo);
+                        listItems.innerHTML += `<li>Pinchitos de pollo (${pesoPinchitosFormateado.valor} ${pesoPinchitosFormateado.unidad})</li>`;
+                    }
+                    
+                    if (tieneSalchichas) {
+                        const pesoSalchichasFormateado = formatearPeso(pesoPorTipo);
+                        listItems.innerHTML += `<li>Salchichas (${pesoSalchichasFormateado.valor} ${pesoSalchichasFormateado.unidad})</li>`;
+                    }
+                    
+                    if (tieneChuletas) {
+                        const pesoChuletas = formatearPeso(pesoPorTipo);
+                        listItems.innerHTML += `<li>Chuletas (${pesoChuletas.valor} ${pesoChuletas.unidad})</li>`;
+                    }
+                } else if (!tieneHamburguesas) {
+                    // Si no hay ningún tipo de carne seleccionado excepto chorizo
+                    listItems.innerHTML += `<li>Sin tipos de carne seleccionados (selecciona al menos uno)</li>`;
+                }
+            } else {
+                shoppingList.style.display = 'none';
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('pesoBase').addEventListener('input', calcular);
+        document.getElementById('mujeres').addEventListener('input', calcular);
+        document.getElementById('hombres').addEventListener('input', calcular);
+        document.getElementById('ninos').addEventListener('input', calcular);
+        document.getElementById('alitas').addEventListener('change', calcular);
+        document.getElementById('hamburguesas').addEventListener('change', calcular);
+        document.getElementById('pinchitos').addEventListener('change', calcular);
+        document.getElementById('salchichas').addEventListener('change', calcular);
+        document.getElementById('chuletas').addEventListener('change', calcular);
+        document.getElementById('chorizo').addEventListener('change', calcular);
+        
+        // Calcular al cargar
+        calcular();
+    </script>
+</body>
+</html>
