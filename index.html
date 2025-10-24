@@ -303,6 +303,9 @@
             const addCustomDiv = document.querySelector('.add-custom').parentElement;
             checkboxGroup.insertBefore(label, addCustomDiv);
 
+            // marcar automáticamente la nueva carne como seleccionada
+            checkbox.checked = true;
+
             // add event listener to the new checkbox
             checkbox.addEventListener('change', calcular);
 
